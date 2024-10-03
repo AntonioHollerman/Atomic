@@ -43,20 +43,3 @@ public class Techniques : Saveable
     }
 }
 
-public class Ability
-{
-    // Ability properties
-    public string abilityName;
-    public int abilityId;
-    public int damage;
-    public float cooldown;
-
-    // Constructor
-    public Ability(string abilityName, int abilityId, int damage, float cooldown)
-    {
-        this.abilityName = abilityName;
-        this.abilityId = abilityId;
-        this.damage = damage;
-        this.cooldown = cooldown;
-    }
-}
