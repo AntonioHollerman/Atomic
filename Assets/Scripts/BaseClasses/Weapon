@@ -6,7 +6,7 @@ public class Weapon : Equipment
     public int damage;
 
     // Constructor
-    public Weapon(string equipmentName, int equipmentId, int damage,)
+    public Weapon(string equipmentName, int equipmentId, int damage)
         : base(equipmentName, equipmentId)
     {
         this.damage = damage;
@@ -22,5 +22,17 @@ public class Weapon : Equipment
     public override void SetSave(int verId)
     {
         // Implement your logic to set the save version ID for the weapon here
+    }
+
+    // Melee method
+    public void Melee(float range,float attackSpeed)
+    {
+        // Implement your logic for melee attack here
+    }
+
+    // Projectile method
+    public void Projectile(float speed, float range,)
+    {
+        // Implement your logic for projectile attack here
     }
 }
