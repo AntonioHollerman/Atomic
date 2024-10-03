@@ -1,0 +1,27 @@
+using UnityEngine;
+
+public class Armor : Equipment
+{
+    // Armor properties
+    public int defense;
+
+    // Constructor
+    public Armor(string equipmentName, int equipmentId, int defense,)
+        : base(equipmentName, equipmentId)
+    {
+        this.defense = defense;
+    }
+
+    // Override the WriteSave method to save armor data
+    public override void WriteSave()
+    {
+        // Implement your logic to save armor data here
+  
+    }
+
+    // Override the SetSave method to set the save version ID for the armor
+    public override void SetSave(int verId)
+    {
+        // Implement your logic to set the save version ID for the armor here
+    }
+}
