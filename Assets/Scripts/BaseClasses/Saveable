@@ -1,0 +1,14 @@
+using UnityEngine;
+
+public class Saveable : MonoBehaviour
+{
+    public void WriteSave()
+    {
+        // Implement your save logic here
+    }
+
+    public void SetSave(int verId)
+    {
+        // Implement your set save logic here
+    }
+}
