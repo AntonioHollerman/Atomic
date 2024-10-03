@@ -23,5 +23,13 @@ public class Armor : Equipment
     public override void SetSave(int verId)
     {
         // Implement your logic to set the save version ID for the armor here
+
+
+ public void Armor(float weight, int blockChance)
+    {
+        // Implement your logic for armor functionality here
+    }
+
+
     }
 }
