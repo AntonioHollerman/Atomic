@@ -4,7 +4,7 @@
 PlayerSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 26
-  productGUID: aca5581c3d6ce9248a402a365ee9de33
+  productGUID: 3135e730565f20e408feec806ef43aa2
   AndroidProfiler: 0
   AndroidFilterTouchesWhenObscured: 0
   AndroidEnableSustainedPerformanceMode: 0
@@ -137,6 +137,8 @@ PlayerSettings:
   vulkanEnableLateAcquireNextImage: 0
   vulkanEnableCommandBufferRecycling: 1
   loadStoreDebugModeEnabled: 0
+  visionOSBundleVersion: 1.0
+  tvOSBundleVersion: 1.0
   bundleVersion: 0.1
   preloadedAssets: []
   metroInputSource: 0
@@ -750,10 +752,10 @@ PlayerSettings:
   apiCompatibilityLevel: 6
   activeInputHandler: 0
   windowsGamepadBackendHint: 0
-  cloudProjectId: c79db050-f19b-4de3-8e3e-de01e2e33dc7
+  cloudProjectId: 9af2034b-dbd5-448e-9975-58a4b4681976
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: Atomic 2024-09-25_10-05-23
+  projectName: Atomic 2024-09-27_09-30-16
   organizationId: toniohollerprof
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0

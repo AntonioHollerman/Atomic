@@ -1,0 +1,38 @@
+using UnityEngine;
+
+public class Saveable : MonoBehaviour
+{
+    public void WriteSave()
+    {
+        // Implement your save logic here
+    }
+
+    public void SetSave(int verId)
+    {
+        // Implement your set save logic here
+    }
+ // Projectiles method
+    public void Projectiles(List<Projectile> projectiles)
+    {
+        // Implement your logic to save projectiles here
+    }
+
+    // BreakableObjects method
+    public void BreakableObjects(List<BreakableObject> breakableObjects)
+    {
+        // Implement your logic to save breakable objects here
+    }
+
+    // Traps method
+    public void Traps(List<Trap> traps)
+    {
+        // Implement your logic to save traps here
+    }
+
+    // NPCs (Decision Base) method
+    public void NPCs(List<NPC> npcs)
+    {
+        // Implement your logic to save NPCs here
+    }
+
+}

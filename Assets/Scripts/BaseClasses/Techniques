@@ -1,0 +1,45 @@
+using UnityEngine;
+using System.Collections.Generic;
+
+public class Techniques : Saveable
+{
+    // Techniques properties
+    public string techniqueName;
+    public int techniqueId;
+
+    // List of abilities
+    public List<Ability> abilities;
+
+    // Constructor
+    public Techniques(string techniqueName, int techniqueId)
+    {
+        this.techniqueName = techniqueName;
+        this.techniqueId = techniqueId;
+        this.abilities = new List<Ability>();
+    }
+
+    // Add ability to the technique
+    public void AddAbility(Ability ability)
+    {
+        abilities.Add(ability);
+    }
+
+    // Remove ability from the technique
+    public void RemoveAbility(Ability ability)
+    {
+        abilities.Remove(ability);
+    }
+
+    // Override the WriteSave method to save technique data
+    public override void WriteSave()
+    {
+        // Implement your logic to save technique data here
+    }
+
+    // Override the SetSave method to set the save version ID for the technique
+    public override void SetSave(int verId)
+    {
+        // Implement your logic to set the save version ID for the technique here
+    }
+}
+
