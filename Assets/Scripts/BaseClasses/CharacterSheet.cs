@@ -20,12 +20,14 @@ namespace BaseClasses
         private int _atk;
         private int _speed;
         private int _def = 0;
-        
+
+        private Dictionary<StatusEffect, float> _activeEffects;
         private float _vulnerableDuration = 0.0f;
         private bool IsVulnerable { get => _vulnerableDuration > 0;}
         private float _stunDuration = 0.0f;
         private bool IsStunned { get => _stunDuration > 0; }
         
+        private List<Technique> _techniques;
         private int _techLen;
         public int TechniquesLength
         {
@@ -46,13 +48,13 @@ namespace BaseClasses
                 _techLen = value;
             }
         }
-
-        private List<Technique> _techniques;
         
         protected override void StartWrapper()
         {
             base.StartWrapper();
             UpdateStats();
+
+            _activeEffects = new Dictionary<StatusEffect, float>();
             _techniques = new List<Technique>();
             for (int i = 0; i < _techLen; i++)
             {
@@ -65,6 +67,15 @@ namespace BaseClasses
             base.UpdateWrapper();
             _vulnerableDuration -= IsVulnerable ? Time.deltaTime : 0;
             _stunDuration -= IsStunned ? Time.deltaTime : 0;
+
+            _activeEffects = _activeEffects
+                .Where(kvp => kvp.Value > 0)
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            foreach (var kvp in _activeEffects)
+            {
+                kvp.Key(this, Time.deltaTime);
+                _activeEffects[kvp.Key] -= Time.deltaTime;
+            }
         }
 
         public void UpdateStats()
@@ -86,6 +97,18 @@ namespace BaseClasses
             return (int) (dmg * (1 / (0.01f * defense + 0.8f)));
         }
 
+        public void LoadEffect(StatusEffect se, float duration)
+        {
+            if (_activeEffects.Keys.Contains(se))
+            {
+                float currentDuration = _activeEffects[se];
+                _activeEffects[se] = currentDuration > duration ? currentDuration : duration;
+            }
+            else
+            {
+                _activeEffects[se] = duration;
+            }
+        }
         public bool LoadTechnique(Technique tech, int position)
         {
             if (!_techniques.Contains(tech))
@@ -93,7 +116,6 @@ namespace BaseClasses
                 _techniques[position] = tech;
                 return true;
             }
-
             return false;
         }
 

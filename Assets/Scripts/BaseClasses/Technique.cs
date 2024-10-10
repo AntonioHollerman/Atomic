@@ -1,5 +1,6 @@
 ﻿namespace BaseClasses
 {
+    public delegate void StatusEffect(CharacterSheet cs, float deltaTime);
     public abstract class Technique
     {
         public int ManaCost { get; protected set; }
