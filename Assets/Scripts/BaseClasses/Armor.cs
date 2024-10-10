@@ -2,14 +2,6 @@
 {
     public class Armor : Equipment
     {
-        protected override void StartWrapper()
-        {
-            
-        }
-
-        protected override void UpdateWrapper()
-        {
-            
-        }
+        public int Def { get; protected set; }
     }
 }

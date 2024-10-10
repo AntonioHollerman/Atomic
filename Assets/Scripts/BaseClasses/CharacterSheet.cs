@@ -26,7 +26,8 @@ namespace BaseClasses
         private bool IsVulnerable { get => _vulnerableDuration > 0;}
         private float _stunDuration = 0.0f;
         private bool IsStunned { get => _stunDuration > 0; }
-        
+
+        private Dictionary<string, Equipment> _equipment;
         private List<Technique> _techniques;
         private int _techLen;
         public int TechniquesLength
@@ -55,6 +56,8 @@ namespace BaseClasses
             UpdateStats();
 
             _activeEffects = new Dictionary<StatusEffect, float>();
+            _equipment = new Dictionary<string, Equipment>();
+            
             _techniques = new List<Technique>();
             for (int i = 0; i < _techLen; i++)
             {
@@ -78,7 +81,7 @@ namespace BaseClasses
             }
         }
 
-        public void UpdateStats()
+        private void UpdateStats()
         {
             _hp = (int)(1.8f * (float) Math.Log(lvl) * BaseHp) + 10;
             _mana = 50 * (int)((float) Math.Log(lvl + 0.5) * BaseMana) + 50;
@@ -86,6 +89,20 @@ namespace BaseClasses
             _speed = (int)(1.05f * Math.Log(lvl) * BaseSpeed) + 5;
         }
 
+        private void UpdateDefense()
+        {
+            int newDef = 0;
+            foreach (var kvp in _equipment)
+            {
+                if (kvp.Value is Armor armor)
+                {
+                    newDef += armor.Def;
+                }
+            }
+
+            _def = newDef;
+        }
+        
         public void DealDamage(int dmg)
         {
             _hp -= IsVulnerable ? GetFinalDamage(dmg, 0) : GetFinalDamage(dmg, _def);
@@ -97,6 +114,14 @@ namespace BaseClasses
             return (int) (dmg * (1 / (0.01f * defense + 0.8f)));
         }
 
+        public void Equip(Equipment eq)
+        {
+            _equipment[eq.GearType] = eq;
+            if (eq is Armor)
+            {
+                UpdateDefense();
+            }
+        }
         public void LoadEffect(StatusEffect se, float duration)
         {
             if (_activeEffects.Keys.Contains(se))
