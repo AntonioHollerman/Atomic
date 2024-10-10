@@ -2,14 +2,7 @@
 {
     public class Weapon : Equipment
     {
-        protected override void StartWrapper()
-        {
-            
-        }
-
-        protected override void UpdateWrapper()
-        {
-            
-        }
+        // To be changed by implemented class
+        public int Atk { get; protected set; }
     }
 }

@@ -2,14 +2,7 @@
 {
     public class Equipment : Savable
     {
-        protected override void StartWrapper()
-        {
-            
-        }
-
-        protected override void UpdateWrapper()
-        {
-            
-        }
+        // To be changed by implemented class
+        public string GearType { get; protected set; }
     }
 }
