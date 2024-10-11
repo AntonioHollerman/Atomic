@@ -22,9 +22,9 @@ namespace BaseClasses
         // Private fields for current character stats
         private int _hp;    // Current health points
         private int _mana;  // Current mana points
-        private int _atk;   // Current attack power
         private int _speed; // Current speed value
         private int _def = 0; // Current defense value, default is 0
+        public int Atk { get; private set; }   // Current attack power
 
         // Dictionary to track active status effects and their durations
         private Dictionary<StatusEffect, float> _activeEffects;
@@ -111,7 +111,7 @@ namespace BaseClasses
         {
             _hp = (int)(1.8f * (float)Math.Log(lvl) * BaseHp) + 10; // Calculate health points
             _mana = 50 * (int)((float)Math.Log(lvl + 0.5) * BaseMana) + 50; // Calculate mana points
-            _atk = (int)((float)Math.Log(lvl) * BaseAtk); // Calculate attack power
+            Atk = (int)((float)Math.Log(lvl) * BaseAtk); // Calculate attack power
             _speed = (int)(1.05f * Math.Log(lvl) * BaseSpeed) + 5; // Calculate speed
         }
 
