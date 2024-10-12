@@ -8,7 +8,7 @@ namespace BaseClasses
     /// <summary>
     /// Represents a character's core attributes and behaviors in the game.
     /// </summary>
-    public class CharacterSheet : Savable
+    public class CharacterSheet : MonoBehaviour, ISavable
     {
         public int lvl; // Character level
         public bool IsALive { get; private set; } // Flag indicating if the character is alive
@@ -22,9 +22,9 @@ namespace BaseClasses
         // Private fields for current character stats
         private int _hp;    // Current health points
         private int _mana;  // Current mana points
-        private int _atk;   // Current attack power
         private int _speed; // Current speed value
         private int _def = 0; // Current defense value, default is 0
+        public int Atk { get; private set; }   // Current attack power
 
         // Dictionary to track active status effects and their durations
         private Dictionary<StatusEffect, float> _activeEffects;
@@ -61,12 +61,21 @@ namespace BaseClasses
             }
         }
 
+        void Start()
+        {
+            StartWrapper();
+        }
+
+        private void Update()
+        {
+            UpdateWrapper();
+        }
+
         /// <summary>
         /// Initializes the character's state at the start of the game.
         /// </summary>
-        protected override void StartWrapper()
+        protected virtual void StartWrapper()
         {
-            base.StartWrapper(); // Call base start logic
             UpdateStats(); // Update initial stats based on level and base attributes
 
             _activeEffects = new Dictionary<StatusEffect, float>(); // Initialize status effects
@@ -79,14 +88,12 @@ namespace BaseClasses
                 _techniques.Add(null);
             }
         }
-
+        
         /// <summary>
         /// Updates the character state each frame.
         /// </summary>
-        protected override void UpdateWrapper()
+        protected virtual void UpdateWrapper()
         {
-            base.UpdateWrapper(); // Call base update logic
-
             // Decrease vulnerability and stun duration if applicable
             _vulnerableDuration -= IsVulnerable ? Time.deltaTime : 0;
             _stunDuration -= IsStunned ? Time.deltaTime : 0;
@@ -111,7 +118,7 @@ namespace BaseClasses
         {
             _hp = (int)(1.8f * (float)Math.Log(lvl) * BaseHp) + 10; // Calculate health points
             _mana = 50 * (int)((float)Math.Log(lvl + 0.5) * BaseMana) + 50; // Calculate mana points
-            _atk = (int)((float)Math.Log(lvl) * BaseAtk); // Calculate attack power
+            Atk = (int)((float)Math.Log(lvl) * BaseAtk); // Calculate attack power
             _speed = (int)(1.05f * Math.Log(lvl) * BaseSpeed) + 5; // Calculate speed
         }
 
@@ -238,6 +245,11 @@ namespace BaseClasses
         public void Stun(float duration)
         {
             _stunDuration = duration > _stunDuration ? duration : _stunDuration;
+        }
+
+        Transform ISavable.GetGameObject()
+        {
+            return transform;
         }
     }
 }
