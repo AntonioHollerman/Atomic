@@ -9,8 +9,9 @@ namespace BaseClasses
     /// </summary>
     public delegate void StatusEffect(CharacterSheet cs, float deltaTime);
     
-    public abstract class Technique : MonoBehaviour
+    public abstract class Technique : ISavable
     {
+        protected Transform Self;
         // How much implemented technique cost
         public int ManaCost { get; protected set; }
         
@@ -31,5 +32,22 @@ namespace BaseClasses
         /// </summary>
         /// <returns>The path to the icon</returns>
         public abstract string GetIconPath();
+
+        Transform ISavable.GetGameObject()
+        {
+            return Self;
+        }
+
+        // Taking away parent class implementation
+        public void WriteToDatabase()
+        {
+            
+        }
+
+        // Taking away parent class implementation
+        public void CreateFromDatabase()
+        {
+            
+        }
     }
 }
