@@ -14,6 +14,8 @@ namespace BaseClasses
         protected Transform Self;
         // How much implemented technique cost
         public int ManaCost { get; protected set; }
+        public float CoolDown { get; protected set; }
+        public float AnimationDuration { get; protected set; }
         
         /// <summary>
         /// Activates ability
