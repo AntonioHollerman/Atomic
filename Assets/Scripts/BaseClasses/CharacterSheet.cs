@@ -10,32 +10,38 @@ namespace BaseClasses
     /// </summary>
     public class CharacterSheet : MonoBehaviour, ISavable
     {
-        public int lvl; // Character level
-        public bool IsALive { get; private set; } // Flag indicating if the character is alive
+        public int lvl; // Character's current level
+        public bool IsALive { get; private set; } // True if the character is alive, false otherwise
 
-        // Base stats for derived classes to define
-        protected int BaseHp;
-        protected int BaseMana;
-        protected int BaseAtk;
-        protected int BaseSpeed;
+        // Base stats, to be defined by derived classes
+        protected int BaseHp;  // Base health points
+        protected int BaseMana; // Base mana points
+        protected int BaseAtk; // Base attack power
+        protected int BaseSpeed; // Base speed value
 
-        // Private fields for current character stats
+        // Current stats for the character
         private int _hp;    // Current health points
         private int _mana;  // Current mana points
-        private int _speed; // Current speed value
-        private int _def = 0; // Current defense value, default is 0
+        private int _speed; // Current speed
+        private int _def = 0; // Current defense, default is 0
         public int Atk { get; private set; }   // Current attack power
 
-        // Dictionary to track active status effects and their durations
+        // Dictionary to store active status effects and their remaining duration
         private Dictionary<StatusEffect, float> _activeEffects;
-        private float _vulnerableDuration = 0.0f; // Duration for which the character is vulnerable
-        private bool IsVulnerable { get => _vulnerableDuration > 0; } // Property to check if character is vulnerable
-        private float _stunDuration = 0.0f; // Duration for which the character is stunned
-        private bool IsStunned { get => _stunDuration > 0; } // Property to check if character is stunned
 
-        // Dictionary for equipped items and list for techniques
+        // Durations for various temporary statuses
+        private float _vulnerableDuration = 0.0f; // Duration of vulnerability
+        private float _stunDuration = 0.0f; // Duration of stun
+        private float _animationBlockedDuration = 0.0f; // Duration of animation block
+
+        // Properties to check if the character is vulnerable, stunned, or has animation blocked
+        private bool IsVulnerable { get => _vulnerableDuration > 0; }
+        private bool IsStunned { get => _stunDuration > 0; }
+        private bool AnimationBlocked { get => _animationBlockedDuration > 0; }
+
+        // Dictionary to store equipped items, and a list to store techniques
         private Dictionary<string, Equipment> _equipment;
-        private List<Technique> _techniques;
+        private List<EquippedTechnique> _techniques;
 
         // Property to manage the length of the techniques list
         private int _techLen;
@@ -44,189 +50,269 @@ namespace BaseClasses
             get => _techLen;
             set
             {
-                if (value > _techLen)
+                if (value > _techLen) // Expand the list if new length is greater
                 {
-                    // If the new length is greater, add null entries to the list
                     for (int i = 0; i < value - _techLen; i++)
                     {
-                        _techniques.Add(null);
+                        _techniques.Add(null); // Add null to represent empty technique slots
                     }
                 }
-                else
+                else // Truncate the list if new length is smaller
                 {
-                    // If the new length is smaller, truncate the list
-                    _techniques = _techniques.Take(value).ToList();
+                    _techniques = _techniques.Take(value).ToList(); // Reduce the list size
                 }
-                _techLen = value; // Update the technique length value
+                _techLen = value; // Update the stored length value
             }
         }
 
-        void Start()
+        /// <summary>
+        /// Represents an equipped technique and its associated state.
+        /// </summary>
+        private class EquippedTechnique
         {
-            StartWrapper();
-        }
+            private readonly CharacterSheet _master; // Reference to the character that owns this technique
+            private readonly Technique _tech; // The technique itself
+            private float _cooldown; // Current cooldown of the technique
+           
+            private bool OnCooldown { get => _cooldown > 0; } // True if the technique is on cooldown
+            public float AnimationDuration { get => _tech.AnimationDuration; } // Duration of the technique's animation
+            public int ManaCost { get => _tech.ManaCost; } // Mana cost of the technique
 
-        private void Update()
-        {
-            UpdateWrapper();
+            /// <summary>
+            /// Constructor to initialize the equipped technique.
+            /// </summary>
+            /// <param name="tech">The technique to equip.</param>
+            /// <param name="master">The character who owns this technique.</param>
+            public EquippedTechnique(Technique tech, CharacterSheet master)
+            {
+                _tech = tech; // Store the technique
+                _cooldown = 0; // Start with no cooldown
+                _master = master; // Store reference to the character
+            }
+
+            /// <summary>
+            /// Decreases the cooldown each frame, if applicable.
+            /// </summary>
+            public void DecrementCount()
+            {
+                _cooldown -= OnCooldown ? Time.deltaTime : 0; // Decrease cooldown by delta time
+            }
+
+            /// <summary>
+            /// Attempts to activate the technique, returning true if successful.
+            /// </summary>
+            /// <returns>True if the technique was activated, false otherwise.</returns>
+            public bool ActivateTechnique()
+            {
+                if (OnCooldown) // If the technique is on cooldown, do nothing
+                {
+                    return false;
+                }
+
+                _cooldown = _tech.CoolDown; // Reset the cooldown to the technique's cooldown time
+                _tech.Cast(_master); // Cast the technique on the owning character
+                return true; // Technique was successfully activated
+            }
         }
 
         /// <summary>
-        /// Initializes the character's state at the start of the game.
+        /// Unity's Start method. Calls the StartWrapper to initialize the character.
+        /// </summary>
+        void Start()
+        {
+            StartWrapper(); // Calls a custom initialization method
+        }
+
+        /// <summary>
+        /// Unity's Update method. Calls the UpdateWrapper to handle frame updates.
+        /// </summary>
+        private void Update()
+        {
+            UpdateWrapper(); // Calls a custom update method each frame
+        }
+
+        /// <summary>
+        /// Initializes the character's attributes and equipment at the start of the game.
         /// </summary>
         protected virtual void StartWrapper()
         {
-            UpdateStats(); // Update initial stats based on level and base attributes
+            UpdateStats(); // Set the initial stats for the character
 
-            _activeEffects = new Dictionary<StatusEffect, float>(); // Initialize status effects
-            _equipment = new Dictionary<string, Equipment>(); // Initialize equipment dictionary
+            _activeEffects = new Dictionary<StatusEffect, float>(); // Initialize the status effect dictionary
+            _equipment = new Dictionary<string, Equipment>(); // Initialize the equipment dictionary
 
-            // Initialize techniques list with null entries
-            _techniques = new List<Technique>();
+            // Initialize techniques with null values
+            _techniques = new List<EquippedTechnique>();
             for (int i = 0; i < _techLen; i++)
             {
-                _techniques.Add(null);
+                _techniques.Add(null); // Fill the list with null values
             }
         }
-        
+
         /// <summary>
-        /// Updates the character state each frame.
+        /// Updates the character's state each frame, applying effects and managing durations.
         /// </summary>
         protected virtual void UpdateWrapper()
         {
-            // Decrease vulnerability and stun duration if applicable
-            _vulnerableDuration -= IsVulnerable ? Time.deltaTime : 0;
-            _stunDuration -= IsStunned ? Time.deltaTime : 0;
+            // Reduce the duration of vulnerability, stun, and animation block
+            _vulnerableDuration -= IsVulnerable ? Time.deltaTime : 0f;
+            _stunDuration -= IsStunned ? Time.deltaTime : 0f;
+            _animationBlockedDuration -= AnimationBlocked ? Time.deltaTime : 0f;
 
-            // Filter out expired status effects
+            // Remove expired status effects
             _activeEffects = _activeEffects
-                .Where(kvp => kvp.Value > 0)
+                .Where(kvp => kvp.Value > 0) // Keep only effects with remaining time
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
             // Apply active status effects
             foreach (var kvp in _activeEffects)
             {
-                kvp.Key(this, Time.deltaTime); // Apply effect to this character
-                _activeEffects[kvp.Key] -= Time.deltaTime; // Reduce the effect duration
+                kvp.Key(this, Time.deltaTime); // Apply the effect to the character
+                _activeEffects[kvp.Key] -= Time.deltaTime; // Decrease the effect's duration
+            }
+
+            // Decrement the cooldown of all techniques
+            foreach (var tech in _techniques)
+            {
+                tech?.DecrementCount(); // Decrease cooldown if the technique exists
             }
         }
 
         /// <summary>
-        /// Calculates and updates character stats based on level and base values.
+        /// Updates the character's stats based on their level and base attributes.
         /// </summary>
         private void UpdateStats()
         {
-            _hp = (int)(1.8f * (float)Math.Log(lvl) * BaseHp) + 10; // Calculate health points
-            _mana = 50 * (int)((float)Math.Log(lvl + 0.5) * BaseMana) + 50; // Calculate mana points
-            Atk = (int)((float)Math.Log(lvl) * BaseAtk); // Calculate attack power
-            _speed = (int)(1.05f * Math.Log(lvl) * BaseSpeed) + 5; // Calculate speed
+            // Calculate current health, mana, attack, and speed based on the character's level
+            _hp = (int)(1.8f * Math.Log(lvl) * BaseHp) + 10;
+            _mana = 50 * (int)(Math.Log(lvl + 0.5) * BaseMana) + 50;
+            Atk = (int)(Math.Log(lvl) * BaseAtk);
+            _speed = (int)(1.05f * Math.Log(lvl) * BaseSpeed) + 5;
         }
 
         /// <summary>
-        /// Calculates and updates the character's defense value based on equipped armor.
+        /// Updates the character's defense based on equipped armor.
         /// </summary>
         private void UpdateDefense()
         {
-            int newDef = 0; // Temporary variable to store new defense value
+            int newDef = 0; // Temporary variable to accumulate defense
+
+            // Loop through all equipped items and add their defense if they are armor
             foreach (var kvp in _equipment)
             {
                 if (kvp.Value is Armor armor) // Check if the equipment is armor
                 {
-                    newDef += armor.Def; // Add armor's defense to total defense
+                    newDef += armor.Def; // Add the armor's defense to the total defense
                 }
             }
 
-            _def = newDef; // Update the defense field with the new value
+            _def = newDef; // Update the character's defense stat
         }
 
         /// <summary>
-        /// Applies damage to the character, considering vulnerabilities and defense.
+        /// Deals damage to the character, considering vulnerabilities and defense.
         /// </summary>
-        /// <param name="dmg">The amount of damage to apply.</param>
+        /// <param name="dmg">The amount of damage to deal.</param>
         public void DealDamage(int dmg)
         {
-            _hp -= IsVulnerable ? GetFinalDamage(dmg, 0) : GetFinalDamage(dmg, _def); // Adjust health based on damage
-            IsALive = _hp > 0; // Check if the character is still alive
+            // Apply damage, reducing health based on vulnerability and defense
+            _hp -= IsVulnerable ? GetFinalDamage(dmg, 0) : GetFinalDamage(dmg, _def);
+            IsALive = _hp > 0; // Set the alive status based on remaining health
         }
 
         /// <summary>
-        /// Calculates final damage after applying defense reduction.
+        /// Calculates the final damage value after applying defense reduction.
         /// </summary>
         /// <param name="dmg">The initial damage value.</param>
-        /// <param name="defense">The defense value to consider in damage reduction.</param>
-        /// <returns>The final damage value after defense is applied.</returns>
+        /// <param name="defense">The defense value to apply to the damage.</param>
+        /// <returns>The final damage value after defense.</returns>
         private int GetFinalDamage(int dmg, int defense)
         {
-            return (int)(dmg * (1 / (0.01f * defense + 0.8f))); // Damage formula considering defense
+            // Formula to calculate final damage after defense is applied
+            return (int)(dmg * (1 / (0.01f * defense + 0.8f)));
         }
 
         /// <summary>
-        /// Equips an item and updates defense if it's armor.
+        /// Equips an item and updates the defense if the item is armor.
         /// </summary>
-        /// <param name="eq">The equipment to be equipped.</param>
+        /// <param name="eq">The equipment to equip.</param>
         public void Equip(Equipment eq)
         {
-            _equipment[eq.GearType] = eq; // Add equipment to the dictionary
-            if (eq is Armor) // If the equipment is armor, update defense
+            _equipment[eq.GearType] = eq; // Add or replace the equipment in the slot
+            if (eq is Armor) // If the equipment is armor, update the defense stat
             {
-                UpdateDefense();
+                UpdateDefense(); // Update the character's defense
             }
         }
 
         /// <summary>
-        /// Loads a status effect or updates its duration if it already exists.
+        /// Loads a status effect or updates its duration if already present.
         /// </summary>
-        /// <param name="se">The status effect to load.</param>
-        /// <param name="duration">The duration for which the effect will be active.</param>
+        /// <param name="se">The status effect to apply.</param>
+        /// <param name="duration">The duration of the status effect.</param>
         public void LoadEffect(StatusEffect se, float duration)
         {
-            if (_activeEffects.Keys.Contains(se)) // If effect already exists, update duration
-            {
-                float currentDuration = _activeEffects[se];
-                _activeEffects[se] = currentDuration > duration ? currentDuration : duration;
-            }
-            else
-            {
-                _activeEffects[se] = duration; // Add new effect with duration
-            }
+            // If the effect is already active, update its duration
+            bool successful = _activeEffects.TryAdd(se, duration);
+            float currentDuration = _activeEffects[se];
+            
+            // Successful true -> Status effect was not here prior and let it keep current duration 
+            // Successful false -> status effect was here prior, swap to duration that is longer
+            _activeEffects[se] = successful ? currentDuration : currentDuration > duration ? currentDuration : duration;
         }
 
         /// <summary>
-        /// Loads a technique into a specific position if not already present.
+        /// Loads a technique into a specific slot if not already present.
         /// </summary>
-        /// <param name="tech">The technique to be loaded.</param>
-        /// <param name="position">The position to insert the technique.</param>
-        /// <returns>True if the technique was successfully loaded; otherwise, false.</returns>
+        /// <param name="tech">The technique to load.</param>
+        /// <param name="position">The slot to load the technique into.</param>
+        /// <returns>True if the technique was successfully loaded, otherwise false.</returns>
         public bool LoadTechnique(Technique tech, int position)
         {
-            if (!_techniques.Contains(tech))
+            EquippedTechnique et = new EquippedTechnique(tech, this); // Create an equipped technique
+            if (_techniques.Contains(et)) // Check if the technique is already loaded
             {
-                _techniques[position] = tech;
-                return true;
+                return false; // Technique was already present
             }
-            return false;
+            _techniques[position] = et; // Load the technique into the specified position
+            return true;
         }
 
         /// <summary>
-        /// Removes a technique from a specific position.
+        /// Removes a technique from a specific slot.
         /// </summary>
-        /// <param name="position">The position from which to remove the technique.</param>
+        /// <param name="position">The slot to remove the technique from.</param>
         public void RemoveTechnique(int position)
         {
-            _techniques[position] = null;
+            _techniques[position] = null; // Set the technique slot to null
         }
 
         /// <summary>
-        /// Casts a technique at a specific position if enough mana is available.
+        /// Casts a technique from a specific slot if enough mana is available.
         /// </summary>
-        /// <param name="position">The position of the technique to be cast.</param>
-        public void CastAbility(int position)
+        /// <param name="position">The slot to cast the technique from.</param>
+        /// <returns>True if the technique was successfully cast, otherwise false.</returns>
+        public bool CastAbility(int position)
         {
-            if (_techniques[position] != null && _mana > _techniques[position].ManaCost)
+            // Ensure the technique exists, there's enough mana, and animations aren't blocked
+            bool CanCast()
             {
-                _techniques[position].Cast(this);
-                _mana -= _techniques[position].ManaCost;
+                return _techniques[position] != null && _mana > _techniques[position].ManaCost && !AnimationBlocked;
             }
+
+            if (!CanCast())
+            {
+                return false; // Return false if casting conditions weren't met
+            }
+            
+            bool successful = _techniques[position].ActivateTechnique(); // Try to cast the technique
+            if (successful)
+            {
+                _mana -= _techniques[position].ManaCost; // Deduct mana
+                _animationBlockedDuration = _techniques[position].AnimationDuration; //
+                // Set animation blocked duration based on the technique's animation duration
+            }
+            return successful; // Return whether the technique was successfully cast
         }
 
         /// <summary>
@@ -235,6 +321,7 @@ namespace BaseClasses
         /// <param name="duration">The duration of vulnerability.</param>
         public void Vulnerable(float duration)
         {
+            // Update vulnerability duration to the maximum of the current or new duration
             _vulnerableDuration = duration > _vulnerableDuration ? duration : _vulnerableDuration;
         }
 
@@ -244,12 +331,17 @@ namespace BaseClasses
         /// <param name="duration">The duration of the stun effect.</param>
         public void Stun(float duration)
         {
+            // Update stun duration to the maximum of the current or new duration
             _stunDuration = duration > _stunDuration ? duration : _stunDuration;
         }
 
+        /// <summary>
+        /// Gets the transform of the character's game object (for saving purposes).
+        /// </summary>
+        /// <returns>The transform of the character's game object.</returns>
         Transform ISavable.GetGameObject()
         {
-            return transform;
+            return transform; // Return the character's transform for saving
         }
     }
 }
