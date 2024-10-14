@@ -11,9 +11,10 @@ namespace BaseClasses
     
     public abstract class Technique : ISavable
     {
-        protected Transform Self;
-        // How much implemented technique cost
-        public int ManaCost { get; protected set; }
+        protected Transform Self; // Reference to the prefab of the technique
+        public int ManaCost { get; protected set; } // How much implemented technique cost
+        public float CoolDown { get; protected set; } // How many seconds is the cooldown
+        public float AnimationDuration { get; protected set; } // How many seconds is the animation block going to be active
         
         /// <summary>
         /// Activates ability
