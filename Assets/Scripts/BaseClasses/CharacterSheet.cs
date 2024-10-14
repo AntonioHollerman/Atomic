@@ -113,6 +113,18 @@ namespace BaseClasses
                 _tech.Cast(_master); // Cast the technique on the owning character
                 return true; // Technique was successfully activated
             }
+
+            // Compare via technique
+            public override bool Equals(object obj)
+            {
+                return _tech.Equals(obj);
+            }
+
+            // Hashcode equals the technique
+            public override int GetHashCode()
+            {
+                return _tech.GetHashCode();
+            }
         }
 
         /// <summary>

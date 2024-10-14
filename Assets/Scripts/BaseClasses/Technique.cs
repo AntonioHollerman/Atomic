@@ -29,10 +29,16 @@ namespace BaseClasses
         public abstract void Effect(CharacterSheet target);
         
         /// <summary>
-        /// If user affected then display UI showing duration
+        /// UI of technique when equipped
         /// </summary>
         /// <returns>The path to the icon</returns>
         public abstract string GetIconPath();
+
+        /// <summary>
+        /// GameObject that will appear when ability is cast
+        /// </summary>
+        /// <returns>Path from Resources folder to the prefab</returns>
+        public abstract string GetPrefabPath();
 
         Transform ISavable.GetGameObject()
         {
@@ -49,6 +55,22 @@ namespace BaseClasses
         public void CreateFromDatabase()
         {
             
+        }
+
+        // Compares via Prefab and icon
+        public override bool Equals(object obj)
+        {
+            if (obj is Technique tech)
+            {
+                return GetPrefabPath() == tech.GetPrefabPath() && GetIconPath() == tech.GetIconPath();
+            }
+            return false;
+        }
+
+        // Hashcode is the addition Hashcode of GetPrefab() GetIconPath()
+        public override int GetHashCode()
+        {
+            return GetPrefabPath().GetHashCode() + GetIconPath().GetHashCode();
         }
     }
 }
