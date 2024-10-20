@@ -16,6 +16,7 @@ namespace Implementation
             WalkCycle();
         }
 
+    //Main Walk Cycle
         private void WalkCycle()
         {
             
