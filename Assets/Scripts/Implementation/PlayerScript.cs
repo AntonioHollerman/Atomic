@@ -7,7 +7,12 @@ namespace Implementation
     {
         protected override void StartWrapper()
         {
-            base.StartWrapper();
+        BaseHp = 9;  // Base health points
+        BaseMana = 75; // Base mana points
+        BaseAtk = 4; // Base attack power
+        BaseSpeed = 7; // Base speed value
+        
+        base.StartWrapper();
         }
 
         protected override void UpdateWrapper()
