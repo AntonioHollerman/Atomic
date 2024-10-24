@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -26,9 +27,6 @@ namespace BaseClasses
         private int _def = 0; // Current defense, default is 0
         public int Atk { get; private set; }   // Current attack power
 
-        // Dictionary to store active status effects and their remaining duration
-        private Dictionary<StatusEffect, float> _activeEffects;
-
         // Durations for various temporary statuses
         private float _vulnerableDuration = 0.0f; // Duration of vulnerability
         private float _stunDuration = 0.0f; // Duration of stun
@@ -42,6 +40,7 @@ namespace BaseClasses
         // Dictionary to store equipped items, and a list to store techniques
         private Dictionary<string, Equipment> _equipment;
         private List<EquippedTechnique> _techniques;
+        private List<Effect> _effects;
 
         // Property to manage the length of the techniques list
         private int _techLen;
@@ -126,6 +125,82 @@ namespace BaseClasses
                 return _tech.GetHashCode();
             }
         }
+        
+        // Represents an effect applied to a character.
+        private class Effect
+        {
+            // References the character (or "master") to which the effect is applied.
+            private readonly CharacterSheet _master;
+            // The specific status effect being applied.
+            private readonly StatusEffect _se;
+            // The time when the effect will stop.
+            private readonly float _stop;
+            // Coroutine reference to manage the effect's lifecycle.
+            private Coroutine _self;
+
+            // Constructor to initialize the effect with the status effect, duration, and the character.
+            public Effect(StatusEffect se, float duration, CharacterSheet master)
+            {
+                _master = master; // Assign the character master.
+                _se = se; // Assign the status effect.
+                _stop = Time.time + duration; // Calculate the stop time by adding the duration to the current time.
+                LoadEffect(); // Load the effect and start its processing.
+            }
+
+            // Loads the effect and manages stacking and removal of existing effects.
+            private void LoadEffect()
+            {
+                // Iterate through all active effects on the character.
+                foreach (var effect in _master._effects)
+                {
+                    // Skip if the effect is different from the current one.
+                    if (!_se.Equals(effect._se))
+                    {
+                        continue;
+                    }
+
+                    // If the current effect ends later than the existing one, exit early.
+                    if (_stop < effect._stop)
+                    {
+                        return;
+                    }
+                    
+                    // Stop the existing effect's coroutine and remove the effect.
+                    _master.StopCoroutine(effect._self);
+                    _master._effects.RemoveAll(x => x.Equals(this));
+                    break;
+                }
+                // Start a new coroutine for this effect and add it to the active effects.
+                _self = _master.StartCoroutine(EffectLoop());
+                _master._effects.Add(this);
+            }
+
+            // Coroutine that applies the effect over time until the stop time.
+            private IEnumerator EffectLoop()
+            {
+                // Continue applying the effect until the stop time is reached.
+                while (Time.time < _stop)
+                {
+                    _se(_master, Time.deltaTime); // Apply the status effect on each frame.
+                    yield return null; // Wait for the next frame.
+                }
+                // Remove the effect once it has finished.
+                _master._effects.RemoveAll(x => x.Equals(this));
+            }
+
+            // Override the Equals method to compare effects by the status effect.
+            public override bool Equals(object obj)
+            {
+                return _se.Equals(obj);
+            }
+
+            // Override GetHashCode to use the status effect's hash code.
+            public override int GetHashCode()
+            {
+                return _se.GetHashCode();
+            }
+        }
+
 
         /// <summary>
         /// Unity's Start method. Calls the StartWrapper to initialize the character.
@@ -149,8 +224,7 @@ namespace BaseClasses
         protected virtual void StartWrapper()
         {
             UpdateStats(); // Set the initial stats for the character
-
-            _activeEffects = new Dictionary<StatusEffect, float>(); // Initialize the status effect dictionary
+            
             _equipment = new Dictionary<string, Equipment>(); // Initialize the equipment dictionary
 
             // Initialize techniques with null values
@@ -170,18 +244,6 @@ namespace BaseClasses
             _vulnerableDuration -= IsVulnerable ? Time.deltaTime : 0f;
             _stunDuration -= IsStunned ? Time.deltaTime : 0f;
             _animationBlockedDuration -= AnimationBlocked ? Time.deltaTime : 0f;
-
-            // Remove expired status effects
-            _activeEffects = _activeEffects
-                .Where(kvp => kvp.Value > 0) // Keep only effects with remaining time
-                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
-            // Apply active status effects
-            foreach (var kvp in _activeEffects)
-            {
-                kvp.Key(this, Time.deltaTime); // Apply the effect to the character
-                _activeEffects[kvp.Key] -= Time.deltaTime; // Decrease the effect's duration
-            }
 
             // Decrement the cooldown of all techniques
             foreach (var tech in _techniques)
@@ -264,13 +326,7 @@ namespace BaseClasses
         /// <param name="duration">The duration of the status effect.</param>
         public void LoadEffect(StatusEffect se, float duration)
         {
-            // If the effect is already active, update its duration
-            bool successful = _activeEffects.TryAdd(se, duration);
-            float currentDuration = _activeEffects[se];
-            
-            // Successful true -> Status effect was not here prior and let it keep current duration 
-            // Successful false -> status effect was here prior, swap to duration that is longer
-            _activeEffects[se] = successful ? currentDuration : currentDuration > duration ? currentDuration : duration;
+            new Effect(se, duration, this);
         }
 
         /// <summary>
