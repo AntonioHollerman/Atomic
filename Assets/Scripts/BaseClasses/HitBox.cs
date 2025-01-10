@@ -1,4 +1,4 @@
-using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,17 +13,47 @@ namespace BaseClasses
         private float _aliveTime;
         
         // Property to check if the hitbox is still active (alive time is greater than 0)
-        private bool IsAlive
-        {
-            get => _aliveTime > 0;
-        }
+        private bool IsAlive => _aliveTime > 0;
 
         /// <summary>
-        /// Unity's Start method. Calls the StartWrapper to initialize the character.
+        /// Abstract method to apply effects to the character when the hitbox interacts with it.
+        /// Must be implemented by derived classes.
         /// </summary>
-        void Start()
+        protected abstract void Effect(CharacterSheet cs);
+
+        public void Activate(float duration)
         {
-            StartWrapper(); // Calls a custom initialization method
+            _ignore = new List<CharacterSheet>();
+            _aliveTime = duration;
+        }
+
+        public void Deactivate()
+        {
+            _aliveTime = 0;
+        }
+
+        IEnumerator AliveChecker()
+        {
+            while (true)
+            {
+                yield return new WaitUntil(() => IsAlive);
+                gameObject.SetActive(true);
+            }
+        }
+
+        IEnumerator DeadChecker()
+        {
+            while (true)
+            {
+                yield return new WaitUntil(() => !IsAlive);
+                gameObject.SetActive(false);
+            }
+        }
+
+        private void Start()
+        {
+            StartCoroutine(AliveChecker());
+            StartCoroutine(DeadChecker());
         }
 
         /// <summary>
@@ -31,57 +61,9 @@ namespace BaseClasses
         /// </summary>
         private void Update()
         {
-            UpdateWrapper(); // Calls a custom update method each frame
-        }
-        
-        /// <summary>
-        /// Initializes the character's attributes and equipment at the start of the game.
-        /// </summary>
-        protected virtual void StartWrapper()
-        {
-            // Can be overridden by subclasses to provide specific initialization logic
-        }
-
-        /// <summary>
-        /// Updates the character's state each frame, applying effects and managing durations.
-        /// </summary>
-        protected virtual void UpdateWrapper()
-        {
-            // Destroy the game object if the hitbox is no longer alive
-            if (!IsAlive)
-            {
-                Destroy(gameObject); 
-            }
-
             // Decrease the alive time every frame
             _aliveTime -= Time.deltaTime;
         }
-
-        /// <summary>
-        /// Adds a character to the ignore list, so that the hitbox will not interact with them.
-        /// </summary>
-        public void AddToIgnore(CharacterSheet cs)
-        {
-            _ignore.Add(cs); // Adds the character to the list of ignored characters
-        }
-
-        /// <summary>
-        /// Adds a list of characters to the ignore list.
-        /// </summary>
-        public void AddToIgnore(List<CharacterSheet> characters)
-        {
-            // Adds each character in the list to the ignore list individually
-            foreach (var cs in characters)
-            {
-                AddToIgnore(cs);
-            }
-        }
-
-        /// <summary>
-        /// Abstract method to apply effects to the character when the hitbox interacts with it.
-        /// Must be implemented by derived classes.
-        /// </summary>
-        protected abstract void Effect(CharacterSheet cs);
 
         /// <summary>
         /// Unity's OnTriggerEnter method. Called when another collider enters the trigger collider.
@@ -99,7 +81,7 @@ namespace BaseClasses
 
             // Apply the effect to the character and add them to the ignore list
             Effect(cs);
-            AddToIgnore(cs);
+            _ignore.Add(cs);
         }
     }
 }
